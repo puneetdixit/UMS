@@ -16,11 +16,6 @@ import time
 
 
 
-class AccessToken(models.Model):
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
-    access_token = models.CharField(max_length=30, null=False, unique=True)
-    is_revoked = models.BooleanField(default=False)
-    expires_time = models.CharField(max_length=30, null=False)
 
 
 class CustomToken(models.Model):
@@ -55,10 +50,6 @@ class CustomToken(models.Model):
     def __str__(self):
         return self.key
 
-
-
-# class Token(Token):
-#     expires_time = models.CharField(max_length=30)
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_auth_token(sender, instance=None, created=False, **kwargs):
