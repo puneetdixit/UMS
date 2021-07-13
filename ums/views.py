@@ -1,69 +1,90 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import JsonResponse
 from ums.models import *
-import json
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.authtoken.views import obtain_auth_token
+import time
 
-# Create your views here.
+
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from django.contrib.auth.models import auth
+from rest_framework.authtoken.models import Token
+
 
 def error(err):
-    return HttpResponse(json.dumps({"status": "error", "desc": str(err)}, indent=4))
+    return JsonResponse({"status": "error", "desc": str(err)})
 
 def success(data=None):
     if not data:
         data = True
-    return HttpResponse(json.dumps({"status": "success", "data": data}, indent=4))
+    return JsonResponse({"status": "success", "data": data})
 
-def get_student_data(request):
-    first_name = request.GET.get('first_name')
-    father_name = request.GET.get('father_name')
-    mother_name = request.GET.get('mother_name')
-    contact_number = request.GET.get('contact')
-    email = request.GET.get('email')
-    address = request.GET.get('address')
-    city = request.GET.get('city')
-    state = request.GET.get('state')
-    country = request.GET.get('country')
-    try:
-        StudentModel(first_name=first_name, father_name=father_name, mother_name=mother_name,
-                    contact_number=contact_number,email=email,address=address,city=city,state=state, country=country).save()
-        return success()
-    except Exception as e:
-        return error(e)
-
+@csrf_exempt 
 def add_course(request):
-    course_id = request.GET.get('course_id')
-    course_name = request.GET.get('course_name')
-    total_semester = request.GET.get('total_semester')
+    course_id = request.POST.get('course_id')
+    course_name = request.POST.get('course_name')
+    duration = request.POST.get('duration')
     try:
-        Courses(course_id, course_name, total_semester).save()
+        Courses(course_id, course_name, duration).save()
         return success()
     except Exception as e:
         return error(e)
 
+@csrf_exempt 
 def add_stream(request):
-    course_id = request.GET.get('course_id')
-    stream_id = request.GET.get('stream_id')
-    stream_name = request.GET.get('stream_name')
-    try:
-        Streams(course_id_id=course_id, stream_id=stream_id, stream_name=stream_name).save()
-        return success("Stream added sucessfully.")
-    except Exception as e:
-        return error(e)
+    if request.user.has_perm('streams.add_streams'):
+        course_id = request.POST.get('course_id')
+        stream_id = request.POST.get('stream_id')
+        stream_name = request.POST.get('stream_name')
+        try:
+            Streams(course_id_id=course_id, stream_id=stream_id, stream_name=stream_name).save()
+            return success("Stream added sucessfully.")
+        except Exception as e:
+            return error(e)
+    else:
+        return error("")
 
+@csrf_exempt 
 def add_subject(request):
-    subject_name = request.GET.get('subject_name')
-    semester = request.GET.get('semester')
-    stream_id = request.GET.get('stream_id')
+    subject_name = request.POST.get('subject_name')
+    semester = request.POST.get('semester')
+    stream_id = request.POST.get('stream_id')
     try:
         Subjects(stream_id_id=stream_id, subject_name=subject_name, semester=semester).save()
         return success()
     except Exception as e:
         return error(e)
 
+@api_view(['GET'])  
 def get_all_course(request):
     """Join on multiple tables using filter"""
-    temp = {}
-    data = Subjects.objects.filter(stream_id__course_id = 123)
-    for i in data:
-        temp[i.stream_id.course_id.course_name] = 1
+    temp = []
+    course_data = Courses.objects.all()
+    for course in course_data:
+        all_streams = [str(stream[0]) for stream in Streams.objects.filter(course_id=course.course_id).values_list('stream_name')]
+        temp.append({"course_id": course.course_id, "course_name": course.course_name, "duration": course.duration, 'streams': all_streams})
+
     return success(temp)
+
+@api_view(['GET'])
+def get_all_streams_by_course_id(request):
+    course_id = request.GET.get('course_id')
+    streams_data = Streams.objects.filter(course_id=course_id)     
+    data = [{"stream_name": stream.stream_name, "stream_id": stream.stream_id} for stream in streams_data]
+    if not data:
+        return success("Course not availabe with course id '{}'".format(course_id))
+    return success(data)
+
+@csrf_exempt
+def generate_token(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        if User.objects.filter(username=username).exists():
+            user = auth.authenticate(username=username, password=password)
+            if user:
+                key = CustomToken.objects.create(user=(User.objects.get(username=user)))
+                return success({"access_token": key.key})
+            return error("Incorrect Password")
+        return error("Username is not registered")
+    return error("GET method not allowed")
