@@ -107,7 +107,7 @@ class TokenAuthentication(BaseAuthentication):
         token_obj = model.objects.get(key=token)
         if token_obj.is_revoked:
             raise exceptions.AuthenticationFailed(_('Token revoked.'))
-        elif time.time() > (token_obj.expires_time):
+        elif time.time() > float(token_obj.expires_time):
             token_obj.is_revoked = True
             token_obj.save()
             raise exceptions.AuthenticationFailed(_('Token Expired.'))

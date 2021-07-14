@@ -54,16 +54,14 @@ class CustomToken(models.Model):
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
-        CustomToken.objects.create(user=instance)
+        CustomToken.objects.create(user=instance, expires_time = time.time() + 86400)
     
 class Courses(models.Model):
-    course_id = models.IntegerField(primary_key=True)
     course_name = models.CharField(max_length=100, null=False, unique=True)
     duration = models.IntegerField(null=False)
 
 class Streams(models.Model):
     course_id = models.ForeignKey(Courses, on_delete=models.CASCADE)
-    stream_id = models.IntegerField(primary_key=True)
     stream_name = models.CharField(max_length=50, null=False)
 
 class Subjects(models.Model):
