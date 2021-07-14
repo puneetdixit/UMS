@@ -1,21 +1,13 @@
-from django.db import models
-from django.contrib.auth.models import User
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from django.conf import settings
-from rest_framework.authtoken.models import Token
-
-
 import binascii
 import os
-
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
-
 import time
 
-
-
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.utils.translation import ugettext_lazy as _
 
 
 class CustomToken(models.Model):
@@ -54,21 +46,23 @@ class CustomToken(models.Model):
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
-        CustomToken.objects.create(user=instance, expires_time = time.time() + 86400)
-    
+        CustomToken.objects.create(user=instance, expires_time=time.time() + 86400)
+
+
 class Courses(models.Model):
     course_name = models.CharField(max_length=100, null=False, unique=True)
     duration = models.IntegerField(null=False)
+
 
 class Streams(models.Model):
     course_id = models.ForeignKey(Courses, on_delete=models.CASCADE)
     stream_name = models.CharField(max_length=50, null=False)
 
+
 class Subjects(models.Model):
     stream_id = models.ForeignKey(Streams, on_delete=models.CASCADE)
     subject_name = models.CharField(max_length=50, null=False, unique=True)
     semester = models.IntegerField(null=False)
-
 
 # def update_auto_increment(start, table_name):
 #     """Update our increments"""

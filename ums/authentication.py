@@ -1,9 +1,9 @@
-# from rest_framework.authentication import TokenAuthentication
-from django.utils.translation import gettext_lazy as _
-from ums.models import CustomToken
-
-from rest_framework import HTTP_HEADER_ENCODING, exceptions
 import time
+
+from django.utils.translation import gettext_lazy as _
+from rest_framework import HTTP_HEADER_ENCODING, exceptions
+
+from ums.models import CustomToken
 
 
 def get_authorization_header(request):
@@ -17,7 +17,6 @@ def get_authorization_header(request):
         # Work around django test client oddness
         auth = auth.encode(HTTP_HEADER_ENCODING)
     return auth
-
 
 
 class BaseAuthentication:
@@ -113,10 +112,8 @@ class TokenAuthentication(BaseAuthentication):
             raise exceptions.AuthenticationFailed(_('Token Expired.'))
         return (token_user, token)
 
-    
     def authenticate_header(self, request):
         return self.keyword
-
 
 
 class CustomTokenModel(TokenAuthentication):
