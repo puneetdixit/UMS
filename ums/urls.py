@@ -10,4 +10,5 @@ urlpatterns = [
     path('get_all_course', views.get_all_course, name='get_all_course'),
     path('get_all_streams_by_course_id', views.get_all_streams_by_course_id, name='get_all_streams_by_course_id'),
     path('generate_token', views.generate_token, name='generate_token'),
+    path('delete_stream', views.delete_stream, name='delete_stream'),
 ]

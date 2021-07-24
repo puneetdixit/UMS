@@ -24,7 +24,7 @@ class CustomToken(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="user_id")
     created = models.DateTimeField(_("Created"), auto_now_add=True)
-    expires_time = models.CharField(max_length=30, default=time.time() + 86400)
+    expires_time = models.CharField(max_length=30, default="000")
     is_revoked = models.BooleanField(default=False)
 
     class Meta:
@@ -50,19 +50,31 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
 
 
 class Courses(models.Model):
+    class Meta:
+        db_table = "courses"
+
     course_name = models.CharField(max_length=100, null=False, unique=True)
     duration = models.IntegerField(null=False)
 
 
 class Streams(models.Model):
+    class Meta:
+        db_table = "streams"
+        unique_together = (('course_id', 'stream_name'),)
+    
     course_id = models.ForeignKey(Courses, on_delete=models.CASCADE)
     stream_name = models.CharField(max_length=50, null=False)
-
 
 class Subjects(models.Model):
     stream_id = models.ForeignKey(Streams, on_delete=models.CASCADE)
     subject_name = models.CharField(max_length=50, null=False, unique=True)
     semester = models.IntegerField(null=False)
+
+
+class Registration(models.Model):
+    email = models.EmailField(max_length=50, unique=True, null=False)
+    username = models.CharField(max_length=50, null=False, unique=True)
+    password = models.PositiveBigIntegerField()
 
 # def update_auto_increment(start, table_name):
 #     """Update our increments"""
